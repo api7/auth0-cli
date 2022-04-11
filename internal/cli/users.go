@@ -33,6 +33,11 @@ var (
 		Help:       "The user's email.",
 		IsRequired: true,
 	}
+	emailVerified = Flag{
+		Name:     "Email Verified",
+		LongForm: "email-verified",
+		Help:     "True if the user's email is verified, false otherwise. ",
+	}
 	userPassword = Flag{
 		Name:       "Password",
 		LongForm:   "password",
@@ -350,11 +355,12 @@ auth0 users delete <id>`,
 
 func updateUserCmd(cli *cli) *cobra.Command {
 	var inputs struct {
-		ID         string
-		Email      string
-		Password   string
-		Name       string
-		Connection string
+		ID            string
+		Email         string
+		EmailVerified bool
+		Password      string
+		Name          string
+		Connection    string
 	}
 
 	cmd := &cobra.Command{
@@ -397,6 +403,10 @@ auth0 users update -n John Doe --email john.doe@example.com`,
 				return err
 			}
 
+			if err := emailVerified.AskBoolU(cmd, &inputs.EmailVerified, current.EmailVerified); err != nil {
+				return err
+			}
+
 			if err := userPassword.AskPasswordU(cmd, &inputs.Password, current.Password); err != nil {
 				return err
 			}
@@ -419,6 +429,8 @@ auth0 users update -n John Doe --email john.doe@example.com`,
 			} else {
 				user.Email = &inputs.Email
 			}
+
+			user.EmailVerified = &inputs.EmailVerified
 
 			if len(inputs.Password) == 0 {
 				user.Password = current.Password
@@ -450,6 +462,7 @@ auth0 users update -n John Doe --email john.doe@example.com`,
 	userConnection.RegisterStringU(cmd, &inputs.Connection, "")
 	userPassword.RegisterStringU(cmd, &inputs.Password, "")
 	userEmail.RegisterStringU(cmd, &inputs.Email, "")
+	emailVerified.RegisterBoolU(cmd, &inputs.EmailVerified, false)
 
 	return cmd
 }
